@@ -29,7 +29,6 @@ def read_readnames(readname_file):
     dict_name = {}
     with open (readname_file,'r') as r:
         for each_line in r:
-            #remove \n
             each_line = each_line.rstrip('\n')
             each_line_list = each_line.split('\t')
             set_for_readnames.add(each_line_list[0])
@@ -55,13 +54,13 @@ def read_pathseq_report_and_create_dict(pathseq_report_csv):
         if '|' in each_line_list[1]:
             name_string_list = each_line_list[1].split('|')
             for n in range(len(name_string_list)):
-                pointer = -n-1           
+                pointer = -n-1
                 if not '_' in name_string_list[pointer]:
                     name = name_string_list[pointer]
                     break
                 if 'unclassified' in name_string_list[pointer]:
                     name = name_string_list[pointer]
-                    break         
+                    break
             id = each_line_list[0]
             dict_for_genus[id] = name
     print ("len(dict_for_genus) = ",len(dict_for_genus))
@@ -70,7 +69,7 @@ def read_pathseq_report_and_create_dict(pathseq_report_csv):
 def read_cell_names2(set_of_readnames, dict_name, dict_for_genus,original_bam_file,unmap_cbub_bam_file,unmap_cbub_fasta_file, out_cell_list,out_readname_cell_path):
     seqbam = pysam.AlignmentFile(original_bam_file, "rb",threads=36)
     readname_cell_path = open(out_readname_cell_path,'w')
-    # Also output fasta and bam for pathseq/kk2
+    # Also output fasta and bam for pathseq/kraken2
     unmap_cbub_fasta = open(unmap_cbub_fasta_file,'w')
     unmap_cbub_bam = pysam.AlignmentFile(unmap_cbub_bam_file, "wb", seqbam)
     set_for_infect_cells=set()
@@ -79,14 +78,14 @@ def read_cell_names2(set_of_readnames, dict_name, dict_for_genus,original_bam_fi
     total_cellranger_reads_UB_CB_unmap = 0
     total_cellranger_reads_UB_CB_unmap_Aligned_to_Pathseq_YP_reads = 0
     total_potential_UMI_including_ambigious_reads = set()
-    #added 102621: output a bam file with only UBCB unmap reads
+    #output a bam file with only UBCB unmap reads
     for each_line in seqbam:
         total_cellranger_bam_reads+=1
         if each_line.has_tag('CB') and each_line.has_tag('UB'):
             total_cellranger_reads_UB_CB_tags+=1
             if each_line.has_tag('CB') and each_line.has_tag('UB') and each_line.is_unmapped:#updated 0520: only extract unmapped reads from cellranger
                 total_cellranger_reads_UB_CB_unmap+=1
-                # added 102721: output a fasta file for kraken
+                # output a fasta file for kraken2
                 query_name_in_cellranger_bam = each_line.query_name
                 seq_in_cellranger_bam = each_line.query_sequence
                 unmap_cbub_fasta.write('>')
@@ -114,7 +113,7 @@ def read_cell_names2(set_of_readnames, dict_name, dict_for_genus,original_bam_fi
                     genus_list = list(set(genus_list))
                     genus_list.sort()
                     genus_list_string = ','.join(genus_list)
-                    #barcode_UMI_dict[barcode_UMI]["genus_string"] = genus_list                
+                    #barcode_UMI_dict[barcode_UMI]["genus_string"] = genus_list
                     mapping_quality = dict_name[readname]["mapping_quality"]
                     outline = readname+'\t'+cellname+'\t'+umi+'\t'+path+'\t'+mapping_quality+'\t'+genus_list_string+'\n'
                     readname_cell_path.write(outline)
@@ -173,20 +172,19 @@ def output_cells_genus_list(barcode_UMI_dict,dict_for_genus):
         #0523:
         if not ',' in barcode_UMI_dict[barcode_UMI]["genus_string"]:
             UMI_id_dict[barcode_UMI] = barcode_UMI_dict[barcode_UMI]["id_string"]
-    # then update UMI_id_dict with genus name
+    # update UMI_id_dict with genus name
     unambigious_UMI = {}
     for barcode_UMI in UMI_id_dict:
         id_list = UMI_id_dict[barcode_UMI]
         genus_list = []
         for each_id in id_list:
-            # ignore unfound genus
             if each_id in dict_for_genus:
                 genus = dict_for_genus[each_id]
                 genus_list.append(genus)
         genus_list = list(set(genus_list))
         if len(genus_list) == 1:#only keep unambigious UMI
             unambigious_UMI[barcode_UMI] = genus_list[0]
-    # next, construct cell_metadata using unambigious_UMI dict,also count the number of UMI in cells
+    # construct cell_metadata using unambigious_UMI dict,also count the number of UMI in cells
     print('Total unambigious UMI = ',len(unambigious_UMI))
     cell_metadata_dict = {}
     for barcode_UMI in unambigious_UMI:
@@ -306,7 +304,7 @@ def UMI_table_output(cell_metadata_dict,barcode_whitelist_file,sample_ident,outp
     header_out = ','.join(header)
     output_UMI_table.write(header_out)
     output_UMI_table.write('\n')
-    #then start each_line
+    # start each_line
     for barcode in cell_metadata_dict:
         if not sample_ident == '':
             cell_name = sample_ident+'_'+barcode
