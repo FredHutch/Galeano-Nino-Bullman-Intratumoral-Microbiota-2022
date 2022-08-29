@@ -1,4 +1,4 @@
-# Galeano Nino et al., Impact of Intratumoral Microbiota on Spatial and Cellular Heterogeneity in human cancer. 2022
+# Galeano-Nino-Bullman-Intratumoral-Microbiota-2022
 
 Analysis code used in Galeano Nino et al., Impact of Intratumoral Microbiota on Spatial and Cellular Heterogeneity in human cancer. 2022
 
