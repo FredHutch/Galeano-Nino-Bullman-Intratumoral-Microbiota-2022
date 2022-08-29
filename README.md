@@ -14,7 +14,7 @@ section of Galeano Nino, et al. 2022.
 ###   Processing of single cell data
     1. Seurat data processing, Harmony integration, SingleR annotation and copyKAT predication (Single_Cell.r)
     2. Differentially expression analysis and GSEA (DE.r)
-    3. summarize number of bacteria reads and UMIs in single cell data (validate_and_count.py)
+    3. Summarize numbers of bacteria reads and UMIs in single cell data (validate_and_count.py)
 ## Part 2: 10x Visium spatial transcriptomic data
     1. Identification of microbial reads within 10x Visium spatial transcriptomic data (Pipeline_Visium.sh)
     2. Bioinformatic analysis of 10x Visium spatial transcriptomic data (Visium.r)
