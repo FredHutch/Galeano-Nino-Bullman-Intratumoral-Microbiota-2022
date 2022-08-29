@@ -4,6 +4,7 @@ from collections import Counter
 import os
 import sys
 """
+# The purpose of this script is deduplication of the merged metadata. Since there are replicated cell names from GEX libraries and 16s libraries, it is necessary to add UMI count from both techniques together into unique cell names.
 # usage: 
 # python metadata_dedup.py \
     NovaSeq_pathogen_UMI_matrix_output_folder(with validation csvs) \
@@ -11,7 +12,7 @@ import sys
     Merged_csv_matrix_from_previous_step \
     Dedup_csv_matrix
 
-# Note: Merged_csv_matrix_from_previous_step should be a csv file conting 7 clinical samples + 3 cell culture samples from our study
+# Note: Merged_csv_matrix_from_previous_step is a csv file conting 7 clinical samples + 3 cell culture samples from our study
 #       otherwise please modify the sample names in the script.
 """
 
