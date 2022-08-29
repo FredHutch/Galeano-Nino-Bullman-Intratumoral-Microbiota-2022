@@ -20,7 +20,7 @@ def feed_csvs(path):#this will return a list of csvs in your path
     return csv_list
 
 if __name__ == "__main__":
-    path = percentage = sys.argv[1]
+    path = sys.argv[1]
     csv_merged = path+'/csv_novami.csv'
     csv_list = feed_csvs(path)
 
