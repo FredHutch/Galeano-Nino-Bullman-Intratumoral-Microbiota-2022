@@ -5,7 +5,7 @@ Analysis code used in Galeano Nino, et al. 2022
 The code in this repository is organized to reflect the description in the Methods
 section of Galeano Nino, et al. 2022.
 
-# Overview of Computational Pipeline for INVADEseq
+# Overview of the Computational Pipeline for INVADEseq
 ## Part 1: 10x Single cell data (For cell culture samples and patient samples)
 ###   Preprocess:
    1. Identification of microbial reads within single cells GEX libraries (Pipeline_GEX.sh)
