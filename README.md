@@ -1,9 +1,9 @@
-# Galeano-Nino-Bullman-Intratumoral-Microbiota-2022
+# Galeano Nino et al., Impact of Intratumoral Microbiota on Spatial and Cellular Heterogeneity in human cancer. 2022
 
-Analysis code used in Galeano Nino, et al. 2022
+Analysis code used in Galeano Nino et al., Impact of Intratumoral Microbiota on Spatial and Cellular Heterogeneity in human cancer. 2022
 
 The code in this repository is organized to reflect the description in the Methods
-section of Galeano Nino, et al. 2022.
+section of Galeano Nino et al., Impact of Intratumoral Microbiota on Spatial and Cellular Heterogeneity in human cancer. 2022.
 
 ## Environment and Reference Data
 
@@ -30,11 +30,15 @@ The location of those reference databases is provided to the analysis scripts us
    1. Identification of microbial reads within single cells GEX libraries (`Pipeline_GEX.sh`)
    2. INVADEseq bacterial 16S rRNA gene libraries (`Pipeline_16S.sh`). The variable `CELLRANGER_FOLDER_NOVA` should be set to the output folder from the `Pipeline_GEX.sh` script.
    3. Combine and deduplication of microbial metadata from step 1 & 2 (`merge_metadata.py` and `metadata_dedup.py`). The folder used as outputs from the previous steps should be provided as an argument to the `merge_metadata.py` script.
+###   Output Data:
+   - `headneck_GEX_16s_mix_dedup.csv` containing bacteria UMI counting matrix that can be used as metadata in single cell process.
 ###   Processing of single cell data
    1. Seurat data processing, Harmony integration, SingleR annotation and copyKAT predication (`Single_Cell.r`)
    2. Differentially expression analysis and GSEA (`DE.r`)
-   3. summarize numbers of bacteria reads and UMIs in single cell data (`validate_and_count.py`)
 ## Part 2: 10x Visium spatial transcriptomic data
    1. Identification of microbial reads within 10x Visium spatial transcriptomic data (`Pipeline_Visium.sh`)
-   2. Bioinformatic analysis of 10x Visium spatial transcriptomic data (Visium.r)
-
+   2. Bioinformatic analysis of 10x Visium spatial transcriptomic data (`Visium.r`)
+   3. summarize numbers of bacteria reads and UMIs in 10X Visium data (`validate_and_count.py`) The folder used as outputs from the previous steps should be provided as an argument to the `Pipeline_Visium.sh` script.
+###   Output Data:
+   - `CRC_16.visium.raw_matrix.genus.csv` and `OSCC_2.visium.raw_matrix.genus.csv` containing bacteria UMI counting matrix that can be used as metadata in visium data process
+   - `CRC_16.visium.raw_matrix.validate.csv` and  `OSCC_2.visium.raw_matrix.validate.csv` containing validation data taht can be used as the input of `validate_and_count.py`

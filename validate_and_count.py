@@ -11,29 +11,38 @@
 # Then use CellsMeta file, count reads
 
 def extract_bac_pos_cells(metadata_file, orig_ident):
+    print(orig_ident)
     cell_names_set = set()
     metadata = open(metadata_file,'r')
     n=0
+    # read in metadata
     for each_line in metadata:
         each_line = each_line.rstrip('\n')
         each_line_list = each_line.split(',')
-        sample_name = each_line_list[0]
+        if not orig_ident == '':
+            sample_name = each_line_list[0]
+        else:
+            sample_name = ''
         if n == 0:
             k=0
             for each_item in each_line_list:
                 if each_item == "Total":
                     position = k
                 k+=1
+            #print ('found k : ',k)
+            #print ('found position : ',position)
         if n > 0 :
             if orig_ident in sample_name:
                 if int(each_line_list[position]) > 0:
                     cell_names = each_line_list[0].split('_')[-1]
                     cell_names_set.add(cell_names)
         n+=1
+    print('len(cell_names_set) = ',len(cell_names_set))
     return cell_names_set
 
 # validate_dict is the dict for cell_UMI -> genus
 def extract_UMI(validate_file, cell_names_set):
+    #print(cell_names_set)
     validate_dict = {}
     genus_set = set()
     validate = open(validate_file,'r')
@@ -43,10 +52,12 @@ def extract_UMI(validate_file, cell_names_set):
         cell_name = each_line.split('+')[0]
         cell_name_set.add(cell_name)
         cell_name_barcode = each_line.split(',')[0]
+        #print(cell_name_barcode)
         genus = each_line.split(',')[1]
         if cell_name in cell_names_set:
             validate_dict[cell_name_barcode] = genus
             genus_set.add(genus)
+    #print(cell_name_set)
     return validate_dict,genus_set
 
 # sum dict is the dict for cell_UMI -> list of readnames
@@ -84,6 +95,8 @@ def summarize_read(sum_dict,validate_dict,genus_set):
         for each_cell_UMI in validate_dict:
             if validate_dict[each_cell_UMI] == each_genus:
                 cell_barcode = each_cell_UMI.split('+')[0]
+                #print(cell_barcode)
+                #print(each_cell_UMI)
                 read_list = sum_dict[each_cell_UMI]
                 if not each_genus in genus_sum_dict:
                     genus_sum_dict[each_genus] = {}
@@ -94,8 +107,9 @@ def summarize_read(sum_dict,validate_dict,genus_set):
                 genus_sum_dict[each_genus]['UMI_list'].append(each_cell_UMI)
                 genus_sum_dict[each_genus]['reads_list'] = genus_sum_dict[each_genus]['reads_list'] + read_list 
     # then convert it to count dict
-    return genus_sum_dict
+    return genus_sum_dict #genus_count_dict
 
+# this function is not used in visium analysis 
 def add_dicts(genus_sum_dict_1,genus_sum_dict_2):
     genus_sum_dict1 = genus_sum_dict_1
     genus_sum_dict2 = genus_sum_dict_2
@@ -113,6 +127,37 @@ def add_dicts(genus_sum_dict_1,genus_sum_dict_2):
     # then convert it to count dict
     genus_count_dict = {}
     for each_genus in genus_sum_dict:
+        #print(genus_sum_dict[each_genus])
+        number_of_cells = len(set(genus_sum_dict[each_genus]['cell_list']))
+        number_of_UMIs = len(set(genus_sum_dict[each_genus]['UMI_list']))
+        number_of_reads = len(set(genus_sum_dict[each_genus]['reads_list']))
+        if not each_genus in genus_count_dict:
+            genus_count_dict[each_genus] = {}
+            genus_count_dict[each_genus]['cell'] = 0
+            genus_count_dict[each_genus]['UMI'] = 0
+            genus_count_dict[each_genus]['reads'] = 0
+        genus_count_dict[each_genus]['cell'] = number_of_cells
+        genus_count_dict[each_genus]['UMI'] = number_of_UMIs
+        genus_count_dict[each_genus]['reads'] = number_of_reads
+    return genus_count_dict
+# 061322 update:
+# add a function to output readnames for each genera! (maybe: cb/ub are included in the header)
+def output_readnames(genus_sum_dict,output_path):
+    # there are multiple genera, so we create one file for each
+    for each_genus in genus_sum_dict:
+        file_name = each_genus+'.csv'
+        #cellsmeta = open(cellsmeta_file,'r')
+        write_reads = open(output_path+'/'+file_name,'w')
+        for each_readname in genus_sum_dict[each_genus]['reads_list']:
+            output_line = each_readname+'\n'
+            write_reads.write(output_line)
+    return
+
+# instead of add_dicts, for visium I use a count_dicts instead
+def count_dicts(genus_sum_dict):
+    genus_count_dict = {}
+    for each_genus in genus_sum_dict:
+        #print(genus_sum_dict[each_genus])
         number_of_cells = len(set(genus_sum_dict[each_genus]['cell_list']))
         number_of_UMIs = len(set(genus_sum_dict[each_genus]['UMI_list']))
         number_of_reads = len(set(genus_sum_dict[each_genus]['reads_list']))
@@ -138,46 +183,40 @@ def output_read(output_file_name, genus_count_dict):
         output_file.write(output_line)
     return
 
-metadata_file = 'processing/patient_sample/validate/metadata.csv'
+print('start processing')
+# CRC_16
+sample_name = 'CRC_16'
+print(sample_name)
+metadata_file = 'data_processing/selected_samples_for_counting/sample.visium_A1_metadata.csv'
+orig_ident = ''
+cell_names_set = extract_bac_pos_cells(metadata_file, orig_ident)
+validate_csv = 'data_processing/python/CRC_16.visium.raw_matrix.validate.csv'
+validate_dict,genus_set = extract_UMI(validate_csv, cell_names_set)
+readnamepath_csv = 'data_processing/python/CRC_16.visium.raw.raw_matrix.readnamepath'
+sum_dict = count_read(readnamepath_csv,validate_dict)
+genus_sum_dict = summarize_read(sum_dict,validate_dict,genus_set)
+readname_path = 'data_processing/selected_samples_for_counting/CRC_16'
+output_readnames(genus_sum_dict,readname_path)
+output_file = 'data_processing/selected_samples_for_counting/'+sample_name+'.sum.csv'
+genus_count_dict = count_dicts(genus_sum_dict)
+output_read(output_file, genus_count_dict)
 
-mi_folder = 'processing/patient_sample/miseq/python/'
-nova_folder = 'processing/patient_sample/novaseq/python/'
+# OSCC_02
+sample_name = 'OSCC_02'
+print(sample_name)
+metadata_file = 'data_processing/selected_samples_for_counting/sample.visium_D1_metadata.csv'
+orig_ident = ''
+cell_names_set = extract_bac_pos_cells(metadata_file, orig_ident)
+validate_csv = 'data_processing/python/OSCC_02.visium.raw_matrix.validate.csv'
+validate_dict,genus_set = extract_UMI(validate_csv, cell_names_set)
+readnamepath_csv = 'data_processing/python/OSCC_02.visium.raw.raw_matrix.readnamepath'
+sum_dict = count_read(readnamepath_csv,validate_dict)
+genus_sum_dict = summarize_read(sum_dict,validate_dict,genus_set)
+readname_path = 'data_processing/selected_samples_for_counting/OSCC_02'
+output_readnames(genus_sum_dict,readname_path)
+output_file = 'data_processing/selected_samples_for_counting/'+sample_name+'.sum.csv'
 
-sample_name_list = [
-    '9218',
-    '9236',
-    '9237',
-    '9347',
-    '9398',
-    'BM319435',
-    'BM320030'
-]
+genus_count_dict = count_dicts(genus_sum_dict)
+output_read(output_file, genus_count_dict)
 
-nova_pattern='.nova.'
-mi_pattern='.mi.'
-validate_csv_pattern='filtered_matrix.validate.csv'
-readnamepath_pattern='raw.filtered_matrix.readnamepath'
-for each_sample in sample_name_list:
-    orig_ident = each_sample
-    cell_names_set = extract_bac_pos_cells(metadata_file, orig_ident)
-
-    nova_validate_csv = nova_folder+each_sample+nova_pattern+validate_csv_pattern
-    validate_dict,genus_set = extract_UMI(nova_validate_csv, cell_names_set)
-    nova_readnamepath_csv = nova_folder+each_sample+nova_pattern+readnamepath_pattern
-    sum_dict = count_read(nova_readnamepath_csv,validate_dict)
-    genus_count_dict_nova = summarize_read(sum_dict,validate_dict,genus_set)
-
-    mi_validate_csv = mi_folder+each_sample+mi_pattern+validate_csv_pattern
-    validate_dict,genus_set = extract_UMI(mi_validate_csv, cell_names_set)
-    mi_readnamepath_csv = mi_folder+each_sample+mi_pattern+readnamepath_pattern
-    sum_dict = count_read(mi_readnamepath_csv,validate_dict)
-    genus_count_dict_mi = summarize_read(sum_dict,validate_dict,genus_set)
-
-    output_file = 'processing/patient_sample/validate/'+each_sample+'.mi.sum.csv'
-
-    output_file = 'processing/patient_sample/validate/'+each_sample+'.nova.sum.csv'
-
-    genus_count_dict = add_dicts(genus_count_dict_nova,genus_count_dict_mi)
-    output_file = 'processing/patient_sample/validate/'+each_sample+'.sum.csv'
-    output_read(output_file, genus_count_dict)
-
+ 

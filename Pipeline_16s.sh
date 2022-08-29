@@ -13,8 +13,8 @@ ml GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 # ROOT is the output directory
 root=${ROOT}
 # CELLRANGER_FOLDER containing MiSeq cellranger count output folders, named by sample names
-raw_data_folder=${CELLRANGER_FOLDER}
-# CELLRANGER_FOLDER_NOVA containing NovaSeq cellranger count output folders (not MiSeq), named by sample names
+raw_data_folder=${CELLRANGER_MKFASTQ_FOLDER}
+# CELLRANGER_FOLDER_NOVA containing GEX cellranger count output folders (not 16s), named by sample names
 nova_bam_path=${CELLRANGER_FOLDER_NOVA}
 # cellranger database
 cellrangerdb=${CELLRANGER_DB}
