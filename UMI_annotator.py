@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Created on Thu Mar 13 9:31:11 2020
-
 @author: Hanrui Wu
 """
 import pysam
 import sys
 import gzip
 
+# read PathSeq bam file, extract read names with YP tag
 def read_cell_names1(pathseq_bam_file, write_bac):
     seqbam = pysam.AlignmentFile(pathseq_bam_file, "rb",threads=36)
     read_name_pathseq = open(write_bac,'w')
@@ -17,13 +17,13 @@ def read_cell_names1(pathseq_bam_file, write_bac):
         total_pathseq_reads+=1
         if each_line.has_tag('YP'):
             total_YP_reads+=1
-            #use AS tag instead of mapping_quality
-            outline = each_line.query_name + '\t' + each_line.get_tag('YP') + '\t' + str(each_line.get_tag('AS')) + '\n'
+            outline = each_line.query_name + '\t' + each_line.get_tag('YP') + '\t' + str(each_line.mapping_quality) + '\n'
             read_name_pathseq.write(outline)
     print('Total reads in pathseq bam = ',total_pathseq_reads)
     print('Total reads in pathseq bam with YP tag  = ',total_YP_reads)
     return
 
+# construct a dictionary for pathogen annotation
 def read_readnames(readname_file):
     set_for_readnames = set()
     dict_name = {}
@@ -35,7 +35,7 @@ def read_readnames(readname_file):
             set_for_readnames.add(each_line_list[0])
             dict_name[each_line_list[0]] = {}
             dict_name[each_line_list[0]]["pathogen"] = each_line_list[1]
-            dict_name[each_line_list[0]]["mapping_quality"] = each_line_list[2] # Alignment Score
+            dict_name[each_line_list[0]]["mapping_quality"] = each_line_list[2]
     #print('Number of Pathseq Reads (with YP TAG) = ',len(set_for_readnames))
     return set_for_readnames, dict_name
 
@@ -109,8 +109,8 @@ def read_cell_names2(set_of_readnames, dict_name, dict_for_genus,original_bam_fi
                         if each_id in dict_for_genus:
                             genus = dict_for_genus[each_id]
                             genus_list.append(genus)
-                        else:
-                            print(each_id,"  not found")
+                        #else:
+                         #   print(each_id,"  not found")
                     genus_list = list(set(genus_list))
                     genus_list.sort()
                     genus_list_string = ','.join(genus_list)
@@ -121,9 +121,9 @@ def read_cell_names2(set_of_readnames, dict_name, dict_for_genus,original_bam_fi
                     total_potential_UMI_including_ambigious_reads.add(umi)
                     total_cellranger_reads_UB_CB_unmap_Aligned_to_Pathseq_YP_reads+=1
     print('total cellranger bam reads = ',total_cellranger_bam_reads)
-    print('total unmapped cellranger bam reads with UB CB tags = ',total_cellranger_reads_UB_CB_unmap)
-    print('total cellranger reads with UB_CB_unmap Aligned to Pathseq reads with YP tags = ',total_cellranger_reads_UB_CB_unmap_Aligned_to_Pathseq_YP_reads)
-    print('total potential UMI including ambigious reads = ',len(total_potential_UMI_including_ambigious_reads))
+    print('total unmapped cellranger bam reads with UB and CB tags = ',total_cellranger_reads_UB_CB_unmap)
+    #print('total cellranger reads with UB_CB_unmap Aligned to Pathseq reads with YP tags = ',total_cellranger_reads_UB_CB_unmap_Aligned_to_Pathseq_YP_reads)
+    #print('total potential UMI including ambigious reads = ',len(total_potential_UMI_including_ambigious_reads))
     cell_list = open(out_cell_list,'w')
     for each_cell in set_for_infect_cells:
         cell_list.write(each_cell)
@@ -158,7 +158,7 @@ def generate_barcode_UMI_dict(out_readname_cell_path):
     return barcode_UMI_dict #fast, no need to generate another temp file
 
 def output_cells_genus_list(barcode_UMI_dict,dict_for_genus):
-    # three dicts: 1. cell-> cell_UMI 2. UMI-> id_sting 3. id -> genus
+    # Three dicts: 1. cell-> cell_UMI 2. UMI-> id_sting 3. id -> genus
     cells_dict = {}
     for barcode_UMI in barcode_UMI_dict:
         cell = barcode_UMI.split('+')[0]
@@ -167,7 +167,7 @@ def output_cells_genus_list(barcode_UMI_dict,dict_for_genus):
             cells_dict[cell].append(barcode_UMI)
         else:
             cells_dict[cell].append(barcode_UMI)
-    # UMI_id_dict is to store UMI<- ids string
+    # UMI_id_dict is to store UMI <- ids string
     UMI_id_dict = {}
     for barcode_UMI in barcode_UMI_dict:
         #0523:
@@ -186,7 +186,7 @@ def output_cells_genus_list(barcode_UMI_dict,dict_for_genus):
         genus_list = list(set(genus_list))
         if len(genus_list) == 1:#only keep unambigious UMI
             unambigious_UMI[barcode_UMI] = genus_list[0]
-    #next, construct cell_metadata using unambigious_UMI dict,also count the number of UMI in cells
+    # next, construct cell_metadata using unambigious_UMI dict,also count the number of UMI in cells
     print('Total unambigious UMI = ',len(unambigious_UMI))
     cell_metadata_dict = {}
     for barcode_UMI in unambigious_UMI:
@@ -200,7 +200,6 @@ def output_cells_genus_list(barcode_UMI_dict,dict_for_genus):
             cell_metadata_dict[barcode]['barcode_UMI']={}
             cell_metadata_dict[barcode]['barcode_UMI'][barcode_UMI] = genus
             cell_metadata_dict[barcode]['pathogen_count']={}
-            #cell_metadata_dict[barcode]['pathogen_count'][genus] = 1
         else:
             cell_metadata_dict[barcode]['genus'].append(genus)
             cell_metadata_dict[barcode]['barcode_UMI'][barcode_UMI] = genus
@@ -214,10 +213,6 @@ def output_cells_genus_list(barcode_UMI_dict,dict_for_genus):
     return cell_metadata_dict
 
 def output_cell_metadata(cell_metadata_dict,out_genus_file,sample_ident,barcode_whitelist_file):
-    #Strategy 0601:
-    #1. if periority, then -> periority
-    #2. elif single highest number -> highest genus
-    #3. else (multiple highest) -> "Multi"
     print('total pathogen-associated gems = ', len(cell_metadata_dict))
     white_list_set = set()
     white_list_dict = {}
@@ -247,7 +242,7 @@ def output_cell_metadata(cell_metadata_dict,out_genus_file,sample_ident,barcode_
         sorted_genus_list.sort()
         genus = '+'.join(sorted_genus_list)            
         UMI_count = len(cell_metadata_dict[barcode]['barcode_UMI'])
-        #then we need a new item for pathogen count
+        #then a new list for pathogen count
         pathogen_count_list = []
         for each_pathogen in cell_metadata_dict[barcode]['pathogen_count']:
             pathogen_count=each_pathogen
@@ -279,7 +274,7 @@ def output_cell_metadata(cell_metadata_dict,out_genus_file,sample_ident,barcode_
     return
 
 def UMI_table_output(cell_metadata_dict,barcode_whitelist_file,sample_ident,output_UMI_table_csv,output_UMI_validate_table_csv):
-    # use cell white list (filtered cell list) from Cellranger Count expression matrix, can be replaced with raw matrix
+    # use cell white list (filtered cell list) from Cellranger Count expression matrix, can be replaced with the raw matrix
     white_list_set = set()
     white_list_dict = {}
     white_list = gzip.open(barcode_whitelist_file, 'rt')
@@ -300,8 +295,7 @@ def UMI_table_output(cell_metadata_dict,barcode_whitelist_file,sample_ident,outp
             output_UMI_validate_table.write(UMI+','+pathogen+'\n')
     output_UMI_table = open(output_UMI_table_csv,'w')
     # output everything for metadata
-    # cell_metadata_dict[barcode]['pathogen_count'][each_pathogen]
-    # first get a complete list of all genera in this sample:
+    # get a complete list of all genera in this sample:
     genera_list_set = set()
     for barcode in cell_metadata_dict:
         for pathogen in cell_metadata_dict[barcode]['pathogen_count']:
@@ -342,7 +336,7 @@ if __name__ == "__main__":
     output_cell_metadata(step5,out_genus_file,sample_ident,barcode_whitelist_file)
     cell_metadata_dict = step5
     UMI_table_output(cell_metadata_dict,barcode_whitelist_file,sample_ident,output_UMI_table_csv,output_UMI_validate_table_csv)
-    #0714:added output_UMI_table_csv
+
 
 # cellranger_bam_file,
 # sample_ident,
@@ -357,3 +351,4 @@ if __name__ == "__main__":
 # out_genus_file,
 # output_UMI_table_csv,
 # output_UMI_validate_table_csv=sys.argv[1:]
+

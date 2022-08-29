@@ -5,20 +5,40 @@ ml SAMtools/1.10-GCCcore-8.3.0
 ml FastQC/0.11.9-Java-11
 ml picard/2.21.6-Java-11
 ml Python
-ml Krona/2.7.1-GCCcore-9.3.0-Perl-5.30.2
 ml Pysam
+ml GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 # ROOT is the output directory
-root=ROOT
+root=${ROOT}
 # CELLRANGER_FOLDER containing MiSeq cellranger count output folders, named by sample names
-raw_data_folder=CELLRANGER_FOLDER
+raw_data_folder=${CELLRANGER_FOLDER}
 # CELLRANGER_FOLDER_NOVA containing NovaSeq cellranger count output folders (not MiSeq), named by sample names
-nova_bam_path=CELLRANGER_FOLDER_NOVA
+nova_bam_path=${CELLRANGER_FOLDER_NOVA}
+# cellranger database
+cellrangerdb=${CELLRANGER_DB}
 # Pathseq database directory
-pathseqdb=PATHSEQDB
+pathseqdb=${PATHSEQDB}
 
 workdir=${root}
 cd ${workdir}
 
+mkdir cellranger_count
+cd cellranger_count
+# Cellranger process
+for folder in ${raw_data_folder}/*
+do
+folder=${folder}
+folder_name=${folder##*/}
+path=${folder}
+echo ${path}
+echo ${folder_name}
+cellranger count \
+--id=${folder_name} \
+--transcriptome=${cellrangerdb} \
+--fastqs=${path} \
+--sample=${folder_name}
+done
+# splid the bam file to read 1 and read 2
+cd ${workdir}
 mkdir split_reads
 cd split_reads
 for folder in ${raw_data_folder}/*
@@ -34,13 +54,13 @@ bedtools bamtofastq -i ${file} \
                       -fq ${samplename}.r1.fq \
                       -fq2 ${samplename}.r2.fq
 done
-
+# fastQC
 mkdir ${root}/preqc
 fastqc \
 -o ${root}/preqc \
 -t 36 \
 ${root}/split_reads/*.fq
-
+# trimmomatic process
 cd ${root}/split_reads
 mkdir trim
 for str in *r1.fq
@@ -52,7 +72,7 @@ trim/${str}.SE_trim.fq \
 ILLUMINACLIP:$EBROOTTRIMMOMATIC/adapters/TruSeq3-PE-2.fa:2:30:10 \
 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 HEADCROP:15
 done
-
+# fastQC
 cd trim
 mkdir ${root}/postqc
 fastqc \
@@ -61,17 +81,14 @@ fastqc \
 
 mkdir ${workdir}/ubams_r1
 cd ${root}/split_reads/trim
-
+# convert fastq files to bam file
 for file in *SE_trim.fq
 do
 java -Xmx750G -jar $EBROOTPICARD/picard.jar FastqToSam \
     FASTQ=${file} \
     OUTPUT=${file}.bam \
-    READ_GROUP_NAME=H0164.2 \
-    SAMPLE_NAME=PRJNA627695 \
-    LIBRARY_NAME=Solexa-272222 \
-    PLATFORM_UNIT=H0164ALXX140820.2 \
-    PLATFORM=illumina 
+    READ_GROUP_NAME=rg1 \
+    SAMPLE_NAME=cellranger1 
 
 mv ${file}.bam ${workdir}/ubams_r1
 done
@@ -79,9 +96,9 @@ done
 folder=${workdir}/ubams_r1
 outpath=${workdir}/pathseq_r1
 mkdir ${outpath}
-ml GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 cd ${folder}
 
+# PathSeq process
 for each_file in *.bam
 do
 filename="${each_file%.*}"
@@ -104,28 +121,13 @@ gatk --java-options "-Xmx750g" PathSeqPipelineSpark \
     --min-score-identity .7
 done
 
-csv_dir=$outpath
-cd $csv_dir
-mkdir krona
-for input in *.csv
-do
-python create_Krona_input_updated.py $csv_dir/$input
-done
-cd krona
-for each_csv in *.krona
-do
-echo ${each_csv}
-ImportText.pl \
-${each_csv} \
--o ${each_csv}.html
-done
-
+# generate metadata files using UMI_annotator.py (genus.csv is the metadata matrix)
 bam_path=${raw_data_folder}
 pathseq_path=${workdir}/pathseq_r1
 out_path=${workdir}/python
 mkdir ${out_path}
 cd ${bam_path}
-# with updated python (validate files included)
+# cell names will be: sample_${each_sample}
 for each_sample in *
 do
 echo ${each_sample}

@@ -1,20 +1,38 @@
 #!/bin/bash
+# The preprocessing pipeline for single cell NovaSeq data
+ml CellRanger/6.1.1
 ml GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 ml Python
-ml Krona/2.7.1-GCCcore-9.3.0-Perl-5.30.2
-# load GATK/Pytho/Krona packages, required packages also available through Anaconda
-# ROOT is the output directory
-root=ROOT
-# CELLRANGER_FOLDER containing cellranger count output folders, named by sample names
-bam_path=CELLRANGER_FOLDER
-# Pathseq database directory
-pathseqdb=PATHSEQDB
+ml Pysam
 
-cd ${bam_path}
+raw_data_folder=${CELLRANGER_MKFASTQ_FOLDER} # the folder containing Cellranger mkfastq ouytput folders
+root=${WORKING_DIR} # working directory
+pathseqdb=${PATHSEQ_DB} # Pathseq database
+cellrangerdb=${CELLRANGER_DB}
+
+cd ${root}
+mkdir cellranger_count
+cd cellranger_count
+
+# Cellranger count processing
+for folder in ${raw_data_folder}/*
+do
+folder=${folder}
+folder_name=${folder##*/}
+path=${folder}
+echo ${path}
+cellranger count \
+--id=${folder_name} \
+--transcriptome=${cellrangerdb} \
+--fastqs=${path} \
+--sample=${folder_name}
+done
+
 outpath=${root}
 mkdir ${outpath}
 outpath=${outpath}/pathseq
 mkdir ${outpath}
+# PathSeq process
 for folder in *
 do
 folder_name=${folder##*/}
@@ -36,35 +54,19 @@ gatk --java-options "-Xmx750g" PathSeqPipelineSpark \
     --min-score-identity .7
 done
 
-csv_dir=$outpath
-cd $csv_dir
-mkdir krona
-for input in *.csv
-do
-python create_Krona_input_updated.py $csv_dir/$input
-done
-cd krona
-for each_csv in *.krona
-do
-echo ${each_csv}
-ImportText.pl \
-${each_csv} \
--o ${each_csv}.html
-done
-
-ml Python
-ml Pysam
+bam_path=${root}/cellranger_count
 pathseq_path=${root}/pathseq
 out_path=${root}/python
 mkdir ${out_path}
 cd ${bam_path}
-# with updated python (validate files included)
+# generate metadata files using UMI_annotator.py (genus.csv is the metadata matrix)
 for each_sample in *
 do
 echo ${each_sample}
+# cell names will be: sample_${each_sample}
 python UMI_annotator.py \
 ${bam_path}/${each_sample}/outs/possorted_genome_bam.bam \
-Sample_${each_sample} \
+sample_${each_sample} \
 ${bam_path}/${each_sample}/outs/filtered_feature_bc_matrix/barcodes.tsv.gz \
 ${pathseq_path}/${each_sample}.pathseq.complete.bam \
 ${pathseq_path}/${each_sample}.pathseq.complete.csv \

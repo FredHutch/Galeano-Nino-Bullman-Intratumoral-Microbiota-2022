@@ -2,23 +2,19 @@
 library(harmony)
 library(Seurat)
 library(ggplot2)
-library(monocle3)
 library(SingleR)
 library(celldex)
 library(msigdbr)
 library(cowplot)
 library(dplyr)
 hpca.se <- celldex::HumanPrimaryCellAtlasData()
-bpe.se <- celldex::BlueprintEncodeData()
-dice.se <- celldex::DatabaseImmuneCellExpressionData()
-mona.se <- celldex::MonacoImmuneData()
-library(clusterProfiler)
 library("enrichplot")
-library(org.Hs.eg.db)
 library(ggupset)
 library(gridExtra)
+library(pheatmap)
 options(bitmapType = 'cairo')
 knitr::opts_chunk$set(dev="CairoPNG")
+library(org.Hs.eg.db)
 
 sample_9347.data<-Read10X(data.dir = "9347/outs/filtered_feature_bc_matrix")
 sample_9347 = CreateSeuratObject(counts = sample_9347.data, project = "Sample_9347", min.cells = 3, min.features = 200)
@@ -79,7 +75,7 @@ head(pred)
 plotScoreHeatmap(pred)
 tab <- table(Assigned=pred$pruned.labels, Cluster=seuratObj_annot@colData$seurat_clusters)
 # Adding a pseudo-count of 10 to avoid strong color jumps with just 1 cell.
-library(pheatmap)
+
 pheatmap(log2(tab+10), color=colorRampPalette(c("white", "blue"))(101))
 pred2 <- SingleR(test=seuratObj_annot, ref=ref, cluster=seuratObj_annot@colData$seurat_clusters, labels=ref$label.fine)
 sample.headneck.backup = sample.headneck
@@ -108,5 +104,5 @@ umi_table[is.na(umi_table)] <- 0
 umi_table$Total <- rowSums(umi_table)
 umi_table[umi_table==0] <- NA
 sample.headneck<-AddMetaData(sample.headneck, umi_table)
-
+#saveRDS(sample.headneck, file = sample.headneck.rds)
 

@@ -5,17 +5,18 @@ ml Python
 ml Pysam
 
 # ROOT is the output directory
-root=ROOT
+root=${ROOT}
 # SPACERANGER_FOLDER containing SpaceRanger output folders, named by sample names
-bam_path=SPACERANGER_FOLDER
+bam_path=${SPACERANGER_FOLDER}
 # Pathseq database directory
-pathseqdb=PATHSEQDB
+pathseqdb=${PATHSEQDB}
 
 cd ${bam_path}
 outpath=${root}
 mkdir ${outpath}
 outpath=${outpath}/pathseq
 mkdir ${outpath}
+# Pathseq process
 for folder in *
 do
 folder_name=${folder##*/}
@@ -37,27 +38,12 @@ gatk --java-options "-Xmx750g" PathSeqPipelineSpark \
     --min-score-identity .7
 done
 
-csv_dir=$outpath
-cd $csv_dir
-mkdir krona
-for input in *.csv
-do
-python create_Krona_input_updated.py $csv_dir/$input
-done
-cd krona
-for each_csv in *.krona
-do
-echo ${each_csv}
-ImportText.pl \
-${each_csv} \
--o ${each_csv}.html
-done
-
 pathseq_path=${root}/pathseq
 out_path=${root}/python
 mkdir ${out_path}
 cd ${bam_path}
-# with updated python (validate files included)
+
+# generate metadata files using UMI_annotator.py (genus.csv is the metadata matrix)
 for folder in *
 do
 each_sample=${folder}
@@ -77,3 +63,4 @@ ${out_path}/${each_sample}.visium.raw_matrix.genus.cell \
 ${out_path}/${each_sample}.visium.raw_matrix.genus.csv \
 ${out_path}/${each_sample}.visium.raw_matrix.validate.csv
 done
+
