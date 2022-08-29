@@ -11,7 +11,6 @@
 # Then use CellsMeta file, count reads
 
 def extract_bac_pos_cells(metadata_file, orig_ident):
-    print(orig_ident)
     cell_names_set = set()
     metadata = open(metadata_file,'r')
     n=0
@@ -19,7 +18,6 @@ def extract_bac_pos_cells(metadata_file, orig_ident):
         each_line = each_line.rstrip('\n')
         each_line_list = each_line.split(',')
         sample_name = each_line_list[0]
-        #print (each_line_list[-4])
         if n == 0:
             k=0
             for each_item in each_line_list:
@@ -32,12 +30,10 @@ def extract_bac_pos_cells(metadata_file, orig_ident):
                     cell_names = each_line_list[0].split('_')[-1]
                     cell_names_set.add(cell_names)
         n+=1
-    #print(len(cell_names_set))
     return cell_names_set
 
 # validate_dict is the dict for cell_UMI -> genus
 def extract_UMI(validate_file, cell_names_set):
-    #print(cell_names_set)
     validate_dict = {}
     genus_set = set()
     validate = open(validate_file,'r')
@@ -47,12 +43,10 @@ def extract_UMI(validate_file, cell_names_set):
         cell_name = each_line.split('+')[0]
         cell_name_set.add(cell_name)
         cell_name_barcode = each_line.split(',')[0]
-        #print(cell_name_barcode)
         genus = each_line.split(',')[1]
         if cell_name in cell_names_set:
             validate_dict[cell_name_barcode] = genus
             genus_set.add(genus)
-    #print(cell_name_set)
     return validate_dict,genus_set
 
 # sum dict is the dict for cell_UMI -> list of readnames
@@ -90,8 +84,6 @@ def summarize_read(sum_dict,validate_dict,genus_set):
         for each_cell_UMI in validate_dict:
             if validate_dict[each_cell_UMI] == each_genus:
                 cell_barcode = each_cell_UMI.split('+')[0]
-                #print(cell_barcode)
-                #print(each_cell_UMI)
                 read_list = sum_dict[each_cell_UMI]
                 if not each_genus in genus_sum_dict:
                     genus_sum_dict[each_genus] = {}
@@ -102,7 +94,7 @@ def summarize_read(sum_dict,validate_dict,genus_set):
                 genus_sum_dict[each_genus]['UMI_list'].append(each_cell_UMI)
                 genus_sum_dict[each_genus]['reads_list'] = genus_sum_dict[each_genus]['reads_list'] + read_list 
     # then convert it to count dict
-    return genus_sum_dict#genus_count_dict
+    return genus_sum_dict
 
 def add_dicts(genus_sum_dict_1,genus_sum_dict_2):
     genus_sum_dict1 = genus_sum_dict_1
@@ -121,7 +113,6 @@ def add_dicts(genus_sum_dict_1,genus_sum_dict_2):
     # then convert it to count dict
     genus_count_dict = {}
     for each_genus in genus_sum_dict:
-        #print(genus_sum_dict[each_genus])
         number_of_cells = len(set(genus_sum_dict[each_genus]['cell_list']))
         number_of_UMIs = len(set(genus_sum_dict[each_genus]['UMI_list']))
         number_of_reads = len(set(genus_sum_dict[each_genus]['reads_list']))
@@ -147,10 +138,10 @@ def output_read(output_file_name, genus_count_dict):
         output_file.write(output_line)
     return
 
-metadata_file = '/processing/patient_sample/validate/metadata.csv'
+metadata_file = 'processing/patient_sample/validate/metadata.csv'
 
-mi_folder = '/processing/patient_sample/miseq/python/'
-nova_folder = '/processing/patient_sample/novaseq/python/'
+mi_folder = 'processing/patient_sample/miseq/python/'
+nova_folder = 'processing/patient_sample/novaseq/python/'
 
 sample_name_list = [
     '9218',
@@ -182,11 +173,11 @@ for each_sample in sample_name_list:
     sum_dict = count_read(mi_readnamepath_csv,validate_dict)
     genus_count_dict_mi = summarize_read(sum_dict,validate_dict,genus_set)
 
-    output_file = '/processing/patient_sample/validate/'+each_sample+'.mi.sum.csv'
+    output_file = 'processing/patient_sample/validate/'+each_sample+'.mi.sum.csv'
 
-    output_file = '/processing/patient_sample/validate/'+each_sample+'.nova.sum.csv'
+    output_file = 'processing/patient_sample/validate/'+each_sample+'.nova.sum.csv'
 
     genus_count_dict = add_dicts(genus_count_dict_nova,genus_count_dict_mi)
-    output_file = '/processing/patient_sample/validate/'+each_sample+'.sum.csv'
+    output_file = 'processing/patient_sample/validate/'+each_sample+'.sum.csv'
     output_read(output_file, genus_count_dict)
 

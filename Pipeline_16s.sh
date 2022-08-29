@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 ml Trimmomatic/0.39-Java-11
 ml BEDTools/2.29.2-GCC-9.3.0
 ml SAMtools/1.10-GCCcore-8.3.0
@@ -16,7 +19,7 @@ nova_bam_path=${CELLRANGER_FOLDER_NOVA}
 # cellranger database
 cellrangerdb=${CELLRANGER_DB}
 # Pathseq database directory
-pathseqdb=${PATHSEQDB}
+pathseqdb=${PATHSEQ_DB}
 
 workdir=${root}
 cd ${workdir}

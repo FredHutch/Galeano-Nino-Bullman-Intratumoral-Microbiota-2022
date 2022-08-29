@@ -4,10 +4,10 @@ library(org.Hs.eg.db)
 library(msigdbr)
 
 m_df <- msigdbr(species = "Homo sapiens")
-head(m_df, 2) %>% as.data.frame
+
 m_H <- msigdbr(species = "Homo sapiens", category = "H") %>% 
   dplyr::select(gs_name, gene_symbol)
-m_H
+
 
 DE_GSEA <- function(seurat_object,
                                 ident_1,
@@ -39,7 +39,7 @@ DE_GSEA <- function(seurat_object,
                                         TERM2GENE = m_H,
                                         eps=0.0,
                                         by = "fgsea")
-    head(markers_seurat_object.em2)
+
     write.csv(markers_seurat_object.em2,seurat_object.markers_gsea_filename, row.names = FALSE)
 }
 

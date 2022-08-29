@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 ml GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 ml Krona/2.7.1-GCCcore-9.3.0-Perl-5.30.2
 ml Python
@@ -9,7 +12,7 @@ root=${ROOT}
 # SPACERANGER_FOLDER containing SpaceRanger output folders, named by sample names
 bam_path=${SPACERANGER_FOLDER}
 # Pathseq database directory
-pathseqdb=${PATHSEQDB}
+pathseqdb=${PATHSEQ_DB}
 
 cd ${bam_path}
 outpath=${root}

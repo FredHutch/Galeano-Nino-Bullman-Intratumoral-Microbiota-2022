@@ -1,11 +1,14 @@
 #!/bin/bash
+
+set -e
+
 # The preprocessing pipeline for single cell NovaSeq data
 ml CellRanger/6.1.1
 ml GATK/4.1.3.0-GCCcore-8.3.0-Java-1.8
 ml Python
 ml Pysam
 
-raw_data_folder=${CELLRANGER_MKFASTQ_FOLDER} # the folder containing Cellranger mkfastq ouytput folders
+raw_data_folder=${CELLRANGER_MKFASTQ_FOLDER} # the folder containing Cellranger mkfastq output folders
 root=${WORKING_DIR} # working directory
 pathseqdb=${PATHSEQ_DB} # Pathseq database
 cellrangerdb=${CELLRANGER_DB}
