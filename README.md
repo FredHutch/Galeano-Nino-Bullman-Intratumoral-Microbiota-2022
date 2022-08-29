@@ -41,4 +41,4 @@ The location of those reference databases is provided to the analysis scripts us
    3. summarize numbers of bacteria reads and UMIs in 10X Visium data (`validate_and_count.py`) The folder used as outputs from the previous steps should be provided as an argument to the `Pipeline_Visium.sh` script.
 ###   Output Data:
    - `CRC_16.visium.raw_matrix.genus.csv` and `OSCC_2.visium.raw_matrix.genus.csv` contain bacteria UMI counting matrix that can be used as metadata in visium data process
-   - `CRC_16.visium.raw_matrix.validate.csv` and  `OSCC_2.visium.raw_matrix.validate.csv` contain validation data taht can be used as the input of `validate_and_count.py`
+   - `CRC_16.visium.raw_matrix.validate.csv` and  `OSCC_2.visium.raw_matrix.validate.csv` contain validation data that can be used as the input of `validate_and_count.py`
